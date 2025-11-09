@@ -7,6 +7,7 @@ import vocabulary.app.entity.User;
 import vocabulary.app.service.UserService;
 
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -19,11 +20,18 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User savedUser = userService.saveUser(user);
+    public ResponseEntity<?> createUser(@RequestBody User user) {
+        try {
 
-        // HTTP 201 Created 상태와 함께 저장된 User 객체를 반환
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedUser);
+            Optional<User> savedUser = userService.saveUser(user);
+
+            // HTTP 201 Created 상태와 함께 저장된 User 객체를 반환
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedUser.get());
+        } catch (Exception e) {
+            // 로그인 중 예외 발생(이미 존재하는 UserId)
+            System.err.println("Exception: " + e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
     @GetMapping("/{userId}")
@@ -41,7 +49,7 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable(name = "userId") Long userId, @RequestBody User updatedUser) {
         try {
             User existingUser = userService.getUser(userId);
-            User savedUser = userService.saveUser(existingUser);
+            User savedUser = userService.saveUser(existingUser).get();
 
             return ResponseEntity.ok(savedUser);
 

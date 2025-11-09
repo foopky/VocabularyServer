@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 import vocabulary.app.entity.User;
 import vocabulary.app.repository.UserRepository;
 
+import java.util.Optional;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -21,10 +23,16 @@ public class UserService {
     }
 
     @Transactional
-    public User saveUser(User user){
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-        return userRepository.save(user);
+    public Optional<User> saveUser(User user) throws RuntimeException{
+        String username = user.getName();
+        if (userRepository.findByName(username).isPresent()) {
+            throw new RuntimeException("The Username already exists.");
+        }
+        else {
+            String encodedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPassword);
+            return Optional.of(userRepository.save(user));
+        }
     }
 
     @Transactional
