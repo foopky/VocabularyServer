@@ -11,7 +11,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vocabulary.app.dto.LoginRequestDto;
+import vocabulary.app.dto.LoginResponseDTO;
+import vocabulary.app.entity.User;
 import vocabulary.app.jwt.JwtTokenProvider;
+import vocabulary.app.repository.UserRepository;
+import vocabulary.app.service.UserService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,9 +24,10 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginRequestDto loginRequest) {
+    public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequest) {
 
         // 1. 사용자 인증 시도
         // UsernamePasswordAuthenticationToken을 생성하여 AuthenticationManager에 전달
@@ -41,7 +46,8 @@ public class AuthController {
 
         // 4. 토큰을 응답 본문이나 헤더에 담아 클라이언트에게 반환
         // 실제 서비스에서는 Refresh Token도 함께 발급하고 관리합니다.
-        return ResponseEntity.ok(jwt);
+        User user = userRepository.findByName(loginRequest.getUsername()).get();
+        return ResponseEntity.ok(new LoginResponseDTO(jwt, user.getId()));
     }
 
     // DTO 생략: LoginRequestDto { String username, String password; }
