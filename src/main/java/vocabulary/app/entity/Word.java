@@ -43,7 +43,7 @@ public class Word {
 
     @JsonIgnore
     @ManyToMany
-    @JoinTable(name = "WordInFolder", joinColumns = @JoinColumn(name = "wordfolder_id"), inverseJoinColumns = @JoinColumn(name = "word_id"))
+    @JoinTable(name = "WordInFolder", joinColumns = @JoinColumn(name = "word_id"), inverseJoinColumns = @JoinColumn(name = "wordfolder_id",referencedColumnName = "wordfolder_id"))
     private List<WordFolder> wordFolders = new ArrayList<>();
 
     public void addWordFolder(WordFolder wordFolder){

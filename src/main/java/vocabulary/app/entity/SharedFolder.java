@@ -16,6 +16,16 @@ public class SharedFolder {
     @EmbeddedId
     private SharedFolderId id;
 
+    @MapsId("userId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @MapsId("folderId")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "wordfolder_id")
+    private WordFolder wordFolder;
+
     private LocalDateTime createDate;
 
     @ColumnDefault("0")
