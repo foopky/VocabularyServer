@@ -43,8 +43,7 @@ public class WordFolderService {
 
     @Transactional
     public List<Word> getAllWordsInFolder(Long folderId){
-        List<Word> words = Arrays.stream(wordInFolderRepository.getAllWordsOnFolder(folderId)).toList();
-        return words;
+        return wordInFolderRepository.getAllWordsOnFolder(folderId);
     }
 
     @Transactional
