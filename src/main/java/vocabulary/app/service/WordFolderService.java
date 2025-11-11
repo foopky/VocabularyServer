@@ -5,8 +5,10 @@ import org.springframework.transaction.annotation.Transactional;
 import vocabulary.app.entity.Word;
 import vocabulary.app.entity.WordFolder;
 import vocabulary.app.repository.WordFolderRepository;
+import vocabulary.app.repository.WordInFolderRepository;
 import vocabulary.app.strategy.WordStrategy;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -15,10 +17,12 @@ public class WordFolderService {
 
     private final Map<String, WordStrategy> strategies;
     private final WordFolderRepository wordFolderRepository;
+    private final WordInFolderRepository wordInFolderRepository;
 
-    public WordFolderService(Map<String, WordStrategy> strategies, WordFolderRepository wordFolderRepository){
+    public WordFolderService(Map<String, WordStrategy> strategies, WordFolderRepository wordFolderRepository, WordInFolderRepository wordInFolderRepository){
         this.strategies = strategies;
         this.wordFolderRepository = wordFolderRepository;
+        this.wordInFolderRepository = wordInFolderRepository;
     }
 
     private WordStrategy getStrategy(String language) {
@@ -29,16 +33,18 @@ public class WordFolderService {
         return strategy;
     }
 
+    // WordInFolder에 맞춰 로직 수정 필요
     @Transactional
     public Object saveWordFolder(String language, WordFolder wordFolder, Long userId){return getStrategy(language).saveWordFolder(wordFolder, userId);}
 
+    // WordInFolder에 맞춰 로직 수정 필요
     @Transactional
     public void addWordToFolder(String language, Long wordId, Long folderId){ getStrategy(language).addWordToFolder(wordId,folderId); }
 
     @Transactional
     public List<Word> getAllWordsInFolder(Long folderId){
-        WordFolder folder = wordFolderRepository.findById(folderId).orElseThrow();
-        return folder.getWords();
+        List<Word> words = Arrays.stream(wordInFolderRepository.getAllWordsOnFolder(folderId)).toList();
+        return words;
     }
 
     @Transactional

@@ -8,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import vocabulary.app.entity.User;
 import vocabulary.app.entity.Word;
 import vocabulary.app.entity.WordFolder;
+import vocabulary.app.entity.WordInFolder;
 import vocabulary.app.repository.UserRepository;
 import vocabulary.app.repository.WordFolderRepository;
+import vocabulary.app.repository.WordInFolderRepository;
 import vocabulary.app.repository.WordRepository;
 
 import java.util.List;
@@ -19,15 +21,18 @@ public class EnglishStrategy implements WordStrategy {
     private final WordRepository wordRepository;
     private final WordFolderRepository wordFolderRepository;
     private final UserRepository userRepository;
+    private final WordInFolderRepository wordInFolderRepository;
 
     @Autowired
     public EnglishStrategy(
             WordRepository wordRepository,
             WordFolderRepository wordFolderRepository,
-            UserRepository userRepository){
+            UserRepository userRepository,
+            WordInFolderRepository wordInFolderRepository){
         this.wordRepository = wordRepository;
         this.wordFolderRepository = wordFolderRepository;
         this.userRepository = userRepository;
+        this.wordInFolderRepository = wordInFolderRepository;
     }
 
     @Transactional
@@ -57,8 +62,7 @@ public class EnglishStrategy implements WordStrategy {
     public void addWordToFolder(Long wordId, Long folderId){
         Word word = wordRepository.findById(wordId).orElseThrow();
         WordFolder folder= wordFolderRepository.findById(folderId).orElseThrow();
-
-        word.addWordFolder(folder);
+        WordInFolder wordInFolder = wordInFolderRepository.save(WordInFolder.create(word, folder));
     }
 
     @Transactional

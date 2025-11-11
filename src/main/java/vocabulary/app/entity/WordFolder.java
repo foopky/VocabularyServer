@@ -28,9 +28,9 @@ public class WordFolder {
 
     private String language;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "wordFolders") // ManytoMany관계의 소유자를 지정 (이 때 wordFolders 변수이름 그대로 사용)
-    private List<Word> words = new ArrayList<>();
+//    @JsonIgnore
+//    @ManyToMany(mappedBy = "wordFolders") // ManytoMany관계의 소유자를 지정 (이 때 wordFolders 변수이름 그대로 사용)
+//    private List<Word> words = new ArrayList<>();
 
     public WordFolder addUser(User user)throws RuntimeException{
         if(this.user ==null)
