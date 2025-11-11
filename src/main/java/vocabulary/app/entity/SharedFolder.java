@@ -5,8 +5,10 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import vocabulary.app.dto.SharedFolderDTO;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 //folderId와 userId는 복합키
 @Entity
@@ -31,11 +33,11 @@ public class SharedFolder {
     @ColumnDefault("0")
     private Integer likes;
 
-    public static SharedFolder create(Long userId, Long folderId){
+    public static SharedFolder create(SharedFolderDTO sharedFolderDTO, User user, WordFolder wordFolder){
         SharedFolder sharedFolder = new SharedFolder();
-        sharedFolder.id = new SharedFolderId(userId, folderId);
-        sharedFolder.createDate = LocalDateTime.now();
-
+        sharedFolder.id = new SharedFolderId(sharedFolderDTO.getUserId(), sharedFolderDTO.getFolderId());
+        sharedFolder.user = user;
+        sharedFolder.wordFolder = wordFolder;
         return sharedFolder;
     }
 

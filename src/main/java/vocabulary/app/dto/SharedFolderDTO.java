@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Getter
 public class SharedFolderDTO {
-    private String userName;
     private Long userId;
-    private String wordName;
-    private Long wordId;
+    private Long folderId;
+    private String name;
+    private String language;
 }

@@ -3,31 +3,41 @@ package vocabulary.app.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vocabulary.app.dto.SharedFolderDTO;
-import vocabulary.app.entity.SharedFolder;
-import vocabulary.app.entity.SharedFolderId;
+import vocabulary.app.entity.*;
 import vocabulary.app.repository.SharedFolderRepository;
+import vocabulary.app.repository.UserRepository;
+import vocabulary.app.repository.WordFolderRepository;
+import vocabulary.app.repository.WordInFolderRepository;
+
+import java.util.List;
 
 @Service
 public class SharedFolderService {
     private final SharedFolderRepository sharedFolderRepository;
+    private final UserRepository userRepository;
+    private final WordFolderRepository wordFolderRepository;
 
-    public SharedFolderService(SharedFolderRepository sharedFolderRepository){
+    public SharedFolderService(SharedFolderRepository sharedFolderRepository, UserRepository userRepository, WordFolderRepository wordFolderRepository){
         this.sharedFolderRepository = sharedFolderRepository;
+        this.userRepository = userRepository;
+        this.wordFolderRepository = wordFolderRepository;
     }
 
     @Transactional
-    public SharedFolder addSharedFolder(Long userId, Long folderId){
-        return sharedFolderRepository.save(SharedFolder.create(userId, folderId));
+    public SharedFolder addSharedFolder(SharedFolderDTO sharedFolderDTO){
+        System.out.println(sharedFolderDTO.getClass());
+        User user = userRepository.findById(sharedFolderDTO.getUserId()).orElseThrow();
+        WordFolder wordFolder = wordFolderRepository.findById(sharedFolderDTO.getFolderId()).orElseThrow();
+        return sharedFolderRepository.save(SharedFolder.create(sharedFolderDTO, user, wordFolder));
     }
 
     @Transactional
-    public SharedFolderDTO[] getSharedFolders(){
-        return sharedFolderRepository.getALLDetailedFolder();
+    public List<SharedFolder> getSharedFolders(){
+        return sharedFolderRepository.findAll();
     }
     @Transactional
-    public SharedFolderDTO getDetailed(Long userId, Long folderId){
-        sharedFolderRepository.findById(new SharedFolderId(userId, folderId)).orElseThrow();
-        return sharedFolderRepository.getDetailedFolder(userId, folderId);
+    public SharedFolder getDetailed(Long userId, Long folderId){
+        return sharedFolderRepository.findById(new SharedFolderId(userId, folderId)).orElseThrow();
     }
 
     @Transactional
