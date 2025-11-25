@@ -2,6 +2,7 @@ package vocabulary.app.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.web.bind.annotation.*;
+import vocabulary.app.entity.SharedFolder;
 import vocabulary.app.entity.Word;
 import vocabulary.app.entity.WordFolder;
 import vocabulary.app.service.WordFolderService;
@@ -19,9 +20,15 @@ public class WordFolderController {
 
 
     @Operation(summary = "모든 폴더 탐색")
-    @GetMapping("/getfolder/{language}")
+    @GetMapping("/getfolderLanguage/{language}")
     public List<WordFolder> getAllWordFolder(@PathVariable("language") String language){
         return wordFolderService.getAllWordFolder(language);
+    }
+
+    @Operation(summary = "유저에 관한 폴더 탐색")
+    @GetMapping("/getfolderUser/{userId}")
+    public List<WordFolder> getWordFolderOnUser(@PathVariable("userId") Long userId){
+        return wordFolderService.getWordFolderOnUser(userId);
     }
 
     @Operation(summary = "폴더의 단어 모두 탐색")
@@ -40,6 +47,12 @@ public class WordFolderController {
     @PostMapping("/addwordtofolder/{language}/{wordId}/{folderId}")
     public void addWordToFolder(@PathVariable("language") String language , @PathVariable("wordId") Long wordId, @PathVariable("folderId") Long folderId){
         wordFolderService.addWordToFolder(language, wordId, folderId);
+    }
+
+    @Operation(summary = "WordFolder 폼으로 저장")
+    @PostMapping("/SharedFolderToMyWordFolder")
+    public void sharedFolderToMyWordFolder(@RequestParam("userId") Long userId, @RequestBody WordFolder wordFolder){
+        wordFolderService.sharedFolderToMyWordFolder(userId, wordFolder);
     }
 
     @Operation(summary = "Folder 삭제")

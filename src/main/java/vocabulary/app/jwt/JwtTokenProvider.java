@@ -24,8 +24,8 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // Access Token 유효 시간 (예: 30분)
-    private static final long ACCESS_TOKEN_VALIDITY_IN_MILLISECONDS = 1000L * 60 * 30;
+    // Access Token 유효 시간 (예: 1일)
+    private static final long ACCESS_TOKEN_VALIDITY_IN_MILLISECONDS = 1000L * 3600 * 24;
 
     // 키 초기화 (객체 생성 후 한 번만 실행)
     private Key key;

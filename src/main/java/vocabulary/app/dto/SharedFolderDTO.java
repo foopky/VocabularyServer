@@ -10,6 +10,4 @@ import lombok.NoArgsConstructor;
 public class SharedFolderDTO {
     private Long userId;
     private Long folderId;
-    private String name;
-    private String language;
 }

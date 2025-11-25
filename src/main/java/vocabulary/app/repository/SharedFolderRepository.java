@@ -6,8 +6,12 @@ import org.springframework.data.repository.query.Param;
 import vocabulary.app.dto.SharedFolderDTO;
 import vocabulary.app.entity.SharedFolder;
 import vocabulary.app.entity.SharedFolderId;
+import vocabulary.app.entity.User;
+
+import java.util.List;
 
 public interface SharedFolderRepository extends JpaRepository<SharedFolder, SharedFolderId> {
+    List<SharedFolder> findByUser(User user);
     // SharedFolder 엔티티의 ID 필드는 'id' 객체 내부의 'folderId', 'userId' 필드를 사용해야 합니다.
 // WordFolder 엔티티의 ID 필드는 'id'라고 가정합니다.
 // User 엔티티의 ID 필드는 'id'라고 가정합니다.

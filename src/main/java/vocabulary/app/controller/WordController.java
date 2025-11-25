@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import vocabulary.app.entity.Word;
+import vocabulary.app.entity.WordInFolderId;
 import vocabulary.app.service.WordService;
 
 import java.util.List;
@@ -35,9 +36,9 @@ public class WordController {
         return wordService.save(word.getLanguage(),word);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable("id") Long id) {
-        wordService.delete(id);
+    @DeleteMapping
+    public void delete(@RequestBody WordInFolderId wordInFolderId) {
+        wordService.delete(wordInFolderId);
     }
 
 

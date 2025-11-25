@@ -18,11 +18,19 @@ public class WordFolderService {
     private final Map<String, WordStrategy> strategies;
     private final WordFolderRepository wordFolderRepository;
     private final WordInFolderRepository wordInFolderRepository;
+    private final UserService userService;
 
-    public WordFolderService(Map<String, WordStrategy> strategies, WordFolderRepository wordFolderRepository, WordInFolderRepository wordInFolderRepository){
+    public WordFolderService(
+            Map<String,
+            WordStrategy> strategies,
+            WordFolderRepository wordFolderRepository,
+            WordInFolderRepository wordInFolderRepository,
+            UserService userService
+    ){
         this.strategies = strategies;
         this.wordFolderRepository = wordFolderRepository;
         this.wordInFolderRepository = wordInFolderRepository;
+        this.userService = userService;
     }
 
     private WordStrategy getStrategy(String language) {
@@ -47,10 +55,21 @@ public class WordFolderService {
     }
 
     @Transactional
+    public List<WordFolder> getWordFolderOnUser(Long userId){
+        return wordFolderRepository.findByUser(userService.getUser(userId));
+    }
+
+    @Transactional
     public List<WordFolder> getAllWordFolder(String language) { return getStrategy(language).getAllWordFolder();}
 
     @Transactional
     public void deleteFolder(Long folderId){
         wordFolderRepository.deleteById(folderId);
+    }
+
+    @Transactional
+    public void sharedFolderToMyWordFolder(Long userId, WordFolder wordFolder) {
+        wordFolder.setUser(userService.getUser(userId));
+        wordFolderRepository.save(wordFolder);
     }
 }

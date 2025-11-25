@@ -40,20 +40,4 @@ public class Word {
     private String pronunciation;
 
     private String example;
-
-//    @JsonIgnore
-//    @ManyToMany
-//    @JoinTable(name = "WordInFolder", joinColumns = @JoinColumn(name = "word_id"), inverseJoinColumns = @JoinColumn(name = "wordfolder_id",referencedColumnName = "wordfolder_id"))
-//    private List<WordFolder> wordFolders = new ArrayList<>();
-
-//    public void addWordFolder(WordFolder wordFolder){
-//        this.wordFolders.add(wordFolder);
-//        if(!wordFolder.getWords().contains(this)){
-//            wordFolder.getWords().add(this);
-//        }
-//    }
-//    public void removeWordFolder(WordFolder wordFolder) {
-//        this.wordFolders.remove(wordFolder);
-//        wordFolder.getWords().remove(this);
-//    }
 }

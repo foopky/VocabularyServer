@@ -1,6 +1,7 @@
 package vocabulary.app.entity;
 
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,13 +18,14 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name="user_id")
+    @Schema(hidden = true)
     private Long id;
+
     @Column(name="name")
     private String name;
+
     private String password;
     private Role role;
     private String description;
-
-
 }
 

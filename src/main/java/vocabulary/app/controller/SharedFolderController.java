@@ -47,6 +47,17 @@ public class SharedFolderController {
         }
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<List<SharedFolder>> getSharedFoldersByUser(
+            @PathVariable(name = "userId") Long userId) {
+        try {
+            List<SharedFolder> sharedFolders = sharedFolderService.getSharedFoldersByUser(userId);
+            return ResponseEntity.ok(sharedFolders);
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping("/{userId}/{folderId}")
     public ResponseEntity<Void> deleteSharedFolder(
             @PathVariable(name = "userId") Long userId,

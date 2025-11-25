@@ -7,7 +7,6 @@ import vocabulary.app.entity.*;
 import vocabulary.app.repository.SharedFolderRepository;
 import vocabulary.app.repository.UserRepository;
 import vocabulary.app.repository.WordFolderRepository;
-import vocabulary.app.repository.WordInFolderRepository;
 
 import java.util.List;
 
@@ -43,5 +42,11 @@ public class SharedFolderService {
     @Transactional
     public void deleteSharedFolder(Long userId, Long folderId){
         sharedFolderRepository.deleteById(new SharedFolderId(userId, folderId));
+    }
+
+    @Transactional
+    public List<SharedFolder> getSharedFoldersByUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow();
+        return sharedFolderRepository.findByUser(user);
     }
 }

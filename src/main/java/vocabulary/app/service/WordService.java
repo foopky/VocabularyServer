@@ -3,6 +3,8 @@ package vocabulary.app.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vocabulary.app.entity.Word;
+import vocabulary.app.entity.WordInFolderId;
+import vocabulary.app.repository.WordInFolderRepository;
 import vocabulary.app.repository.WordRepository;
 import vocabulary.app.strategy.WordStrategy;
 
@@ -14,11 +16,16 @@ public class WordService {
 
     private final Map<String, WordStrategy> strategies;
     private final WordRepository wordRepository;
+    private final WordInFolderRepository wordInFolderRepository;
 
     // Spring이 모든 WordStrategy 빈을 Map으로 주입해줌 (key = Bean 이름)
-    public WordService(Map<String, WordStrategy> strategies, WordRepository wordRepository) {
+    public WordService(
+            Map<String, WordStrategy> strategies,
+            WordRepository wordRepository,
+            WordInFolderRepository wordInFolderRepository) {
         this.strategies = strategies;
         this.wordRepository = wordRepository;
+        this.wordInFolderRepository = wordInFolderRepository;
     }
 
     // 언어에 따라 strategy 패턴 이용 -> 폴더 저장도 strategy 패턴 적용 필요 o
@@ -49,7 +56,11 @@ public class WordService {
 
 
     @Transactional
-    public void delete(Long id) {
-        wordRepository.deleteById(id);
+    public void delete(WordInFolderId wordInFolderId) {
+        wordInFolderRepository.deleteById(wordInFolderId);
+//      폴더와 연결되는 단어 없을 시 완전히 단어자체를 삭제.
+        if(wordInFolderRepository.getAllWordInFolderOnWordId(wordInFolderId.getWordId()).isEmpty()){
+            wordRepository.deleteById(wordInFolderId.getWordId());
+        }
     }
 }

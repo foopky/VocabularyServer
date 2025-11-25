@@ -1,6 +1,7 @@
 package vocabulary.app.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -14,11 +15,13 @@ import java.util.List;
 @Setter
 @Getter
 public class WordFolder {
+    @Schema(hidden = true)
     @Column(name="wordfolder_id")
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(hidden = true)
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
