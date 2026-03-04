@@ -50,7 +50,7 @@ public class WordService {
     }
 
     @Transactional
-    public Object save(String language, Word word) {
+    public Word save(String language, Word word) {
         return getStrategy(language).save(word);
     }
 

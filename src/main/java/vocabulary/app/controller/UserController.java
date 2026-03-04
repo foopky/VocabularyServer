@@ -49,12 +49,11 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable(name = "userId") Long userId, @RequestBody User updatedUser) {
         try {
             User existingUser = userService.getUser(userId);
-            User savedUser = userService.saveUser(existingUser).get();
-
+            updatedUser.setId(existingUser.getId());
+            User savedUser = userService.editUser(updatedUser).get();
             return ResponseEntity.ok(savedUser);
 
         } catch (NoSuchElementException e) {
-            // 수정 대상 User가 없으면 404 Not Found 반환
             return ResponseEntity.notFound().build();
         }
     }

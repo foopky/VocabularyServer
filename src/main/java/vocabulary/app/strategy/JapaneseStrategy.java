@@ -51,12 +51,12 @@ public class JapaneseStrategy implements WordStrategy{
     }
 
     @Transactional
-    public ResponseEntity<Word> save(Word word){
+    public Word save(Word word){
         if (word.getOndoku()==null && word.getKundoku()==null) {
             System.out.println("Exception occurs at JapaneseStrategy.");
             throw new IllegalArgumentException("Japanese의 경우 ondoku또는 kundoku 필드에 String type이 입력되어야 합니다.");
         }
-        else return new ResponseEntity<Word>(wordRepository.save(word), HttpStatus.OK);
+        else return wordRepository.save(word);
     }
 
     @Transactional

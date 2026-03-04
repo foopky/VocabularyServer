@@ -51,11 +51,11 @@ public class EnglishStrategy implements WordStrategy {
     }
 
     @Transactional
-    public ResponseEntity<Word> save(Word word){
+    public Word save(Word word){
         if (word.getPronunciation()==null){
             throw new IllegalArgumentException("English의 경우 pronunciation 필드에 String type이 입력되어야 합니다.");
         }
-        else return new ResponseEntity<Word>(wordRepository.save(word),HttpStatus.OK);
+        else return wordRepository.save(word);
     }
 
     @Transactional

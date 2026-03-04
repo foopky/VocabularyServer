@@ -58,7 +58,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.GET,"/api/users").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/users").permitAll().
+                                requestMatchers(HttpMethod.GET, "/healthCheck").permitAll()
                         .requestMatchers(HttpMethod.POST,"/api/users").permitAll()
 //                        .requestMatchers("/**").permitAll() // 모든 경로 허용
                         .anyRequest().authenticated()
@@ -74,7 +75,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("http://localhost*", "https://vocaserver.foopky.com*", "https://vocawebvercel.vercel.app*", "https://www.netflix.com*"));
+        configuration.setAllowedOriginPatterns(List.of("http://localhost*", "https://vocabulary-web.vercel.app*", "https://vocabulary-web.foopky.com*", "https://voca-app-backend.foopky.com*", "https://www.netflix.com*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

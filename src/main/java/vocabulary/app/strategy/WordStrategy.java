@@ -10,7 +10,7 @@ public interface WordStrategy {
 
     public List<Word> getAll();
     public List<Word> getByLearned(boolean learned);
-    public Object save(Word word);
+    public Word save(Word word);
     public void delete(Long id);
 
     public List<WordFolder> getAllWordFolder();

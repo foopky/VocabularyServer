@@ -38,6 +38,4 @@ public class Word {
 
     // english attribute
     private String pronunciation;
-
-    private String example;
 }
