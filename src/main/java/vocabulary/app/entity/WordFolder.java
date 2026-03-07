@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,8 +28,10 @@ public class WordFolder {
     private User user;
 
     @NotNull
+    @Nationalized
     private String name;
 
+    @Nationalized
     private String language;
 
 //    @JsonIgnore

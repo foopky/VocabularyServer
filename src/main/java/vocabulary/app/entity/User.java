@@ -7,8 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Nationalized;
 
 @Entity
+@Table(name="users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,11 +23,14 @@ public class User {
     @Schema(hidden = true)
     private Long id;
 
+    @Nationalized
     @Column(name="name")
     private String name;
 
+    @Nationalized
     private String password;
     private Role role;
+    @Nationalized
     private String description;
 }
 

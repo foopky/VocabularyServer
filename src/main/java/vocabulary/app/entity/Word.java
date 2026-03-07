@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,21 +22,28 @@ public class Word {
     @Column(name = "word_id")
     private Long id;
 
+    @Nationalized
     @Column(nullable = false)
     private String language;  // english or japanese
+    @Nationalized
     @Column(nullable = false)
     private String pos;       // 품사
+    @Nationalized
     @Column(nullable = false)
     private String word;      // 단어
+    @Nationalized
     @Column(nullable = false)
     private String meaning;   // 뜻
     @Column(nullable = false)
     private boolean learned;  // 학습 여부
 
     // japanese attribute -> application 레벨에서 확인 / 비즈니스 로직 전략 패턴으로 분리
+    @Nationalized
     private String kundoku;
+    @Nationalized
     private String ondoku;
 
     // english attribute
+    @Nationalized
     private String pronunciation;
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Nationalized;
 
 @Entity
 @Getter
@@ -28,7 +29,10 @@ public class Sentence {
     @Schema(hidden = true)
     private User user;
 
+    @Nationalized
     private String sentence;
+    @Nationalized
     private String style;
+    @Nationalized
     private String meaning;
 }
