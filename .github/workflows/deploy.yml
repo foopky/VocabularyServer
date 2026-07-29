@@ -29,6 +29,7 @@ jobs:
           SHA="${GITHUB_SHA::7}"
           echo "image=${REPO}:${SHA}" >> "$GITHUB_OUTPUT"
           echo "tags=${REPO}:${SHA},${REPO}:latest" >> "$GITHUB_OUTPUT"
+          echo "resolved image: ${REPO}:${SHA}"   # 배포 잡에서 빈 값 디버깅용
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -58,21 +59,27 @@ jobs:
     steps:
       - name: SSH into EC2 and run container
         uses: appleboy/ssh-action@v1.2.0
-        env:
-          IMAGE: ${{ needs.build-and-push.outputs.image }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_SSH_PORT || 22 }}
-          envs: IMAGE,CONTAINER_NAME,APP_PORT,ENV_FILE
-          script_stops: true
+          script_stop: true
+          # envs로 넘기지 않고 Actions가 스크립트 텍스트에 직접 치환한다.
+          # 원격 셸이 sh일 수도 있어 pipefail 대신 POSIX 호환 set -eu만 쓴다.
           script: |
-            set -euo pipefail
+            set -eu
 
-            CONTAINER_NAME="${CONTAINER_NAME:-app}"
-            APP_PORT="${APP_PORT:-8080}"
-            ENV_FILE="${ENV_FILE:-/home/ec2-user/.env}"
+            IMAGE="${{ needs.build-and-push.outputs.image }}"
+            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+            APP_PORT="${{ env.APP_PORT }}"
+            ENV_FILE="${{ env.ENV_FILE }}"
+
+            # 빈 값이면 "invalid reference format" 대신 원인을 바로 알 수 있게
+            if [ -z "$IMAGE" ]; then
+              echo "::error::image reference is empty - check build-and-push job outputs"
+              exit 1
+            fi
 
             # ec2-user가 docker 그룹에 없으면 sudo로 폴백
             DOCKER="docker"

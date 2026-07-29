@@ -6,9 +6,6 @@ build/
 !**/src/test/**/build/
 .env
 
-### 로컬 실험용 프로젝트 사본 (저장소에 올리지 않는다) ###
-gwtest/
-
 ### STS ###
 .apt_generated
 .classpath
