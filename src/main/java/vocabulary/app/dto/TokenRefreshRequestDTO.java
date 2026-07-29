@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
-public class LoginResponseDTO {
-    private String jwt;
-    private Long userId;
-    // Access Token 만료 시 /api/auth/refresh 로 재발급받을 때 사용
+public class TokenRefreshRequestDTO {
     private String refreshToken;
 }

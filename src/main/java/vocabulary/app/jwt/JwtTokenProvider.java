@@ -20,12 +20,21 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
+    // 토큰 검증 결과. 프론트가 "만료"와 "위조"를 구분할 수 있어야 재발급 여부를 판단할 수 있다.
+    public enum ValidationResult {
+        VALID,
+        EXPIRED,
+        INVALID
+    }
+
     // 시크릿 키는 application.properties 등에 안전하게 저장
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // Access Token 유효 시간 (예: 1일)
-    private static final long ACCESS_TOKEN_VALIDITY_IN_MILLISECONDS = 1000L * 3600 * 24;
+    // Access Token 유효 시간 (기본 1시간)
+    // 탈취 시 피해를 줄이기 위해 짧게 두고, 만료되면 Refresh Token으로 재발급받는다.
+    @Value("${jwt.access-token-validity-ms:3600000}")
+    private long accessTokenValidityMs;
 
     // 키 초기화 (객체 생성 후 한 번만 실행)
     private Key key;
@@ -39,9 +48,13 @@ public class JwtTokenProvider {
 
     // 1. JWT 토큰 생성
     public String createToken(Authentication authentication) {
-        String username = authentication.getName(); // UserDetails의 getUsername() 값
+        return createToken(authentication.getName()); // UserDetails의 getUsername() 값
+    }
+
+    // Refresh Token으로 재발급할 때는 Authentication 객체 없이 사용자 이름만으로 생성한다.
+    public String createToken(String username) {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + ACCESS_TOKEN_VALIDITY_IN_MILLISECONDS);
+        Date validity = new Date(now.getTime() + accessTokenValidityMs);
 
         return Jwts.builder()
                 .setSubject(username) // 토큰 주체 (사용자 ID)
@@ -53,19 +66,25 @@ public class JwtTokenProvider {
 
     // 2. JWT 토큰 검증
     public boolean validateToken(String token) {
+        return validate(token) == ValidationResult.VALID;
+    }
+
+    // 만료(EXPIRED)와 그 외 오류(INVALID)를 구분해서 반환
+    public ValidationResult validate(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
+            return ValidationResult.VALID;
+        } catch (ExpiredJwtException e) {
+            // 만료된 JWT 토큰 -> 클라이언트가 Refresh Token으로 재발급을 시도해야 한다
+            return ValidationResult.EXPIRED;
         } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
             // 잘못된 JWT 서명
-        } catch (ExpiredJwtException e) {
-            // 만료된 JWT 토큰
         } catch (UnsupportedJwtException e) {
             // 지원되지 않는 JWT 토큰
         } catch (IllegalArgumentException e) {
             // JWT 클레임이 비어있음
         }
-        return false;
+        return ValidationResult.INVALID;
     }
 
     // 3. 토큰에서 인증 정보(Authentication) 추출

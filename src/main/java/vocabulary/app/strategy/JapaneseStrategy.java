@@ -15,6 +15,7 @@ import vocabulary.app.repository.WordInFolderRepository;
 import vocabulary.app.repository.WordRepository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Component("japanese")
 public class JapaneseStrategy implements WordStrategy{
@@ -59,15 +60,14 @@ public class JapaneseStrategy implements WordStrategy{
         else return wordRepository.save(word);
     }
 
+    // 예외를 삼키고 null을 반환하면 컨트롤러가 200 + 빈 본문을 내보내 실패가 성공처럼 보인다.
+    // 또 save를 먼저 하면 user 할당이 실패했을 때 user_id가 비어 있는 폴더가 그대로 남는다.
+    // 그래서 user를 먼저 붙이고 저장한다.
     @Transactional
     public WordFolder saveWordFolder(WordFolder wordFolder, Long userId){
-        try {
-            User user = userRepository.findById(userId).orElseThrow();
-            return wordFolderRepository.save(wordFolder).addUser(user);
-        } catch (Exception e){
-            System.err.println("폴더에 유저 할당 중 예외 발생: " + e);
-        }
-        return null;
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("사용자를 찾을 수 없습니다: " + userId));
+        return wordFolderRepository.save(wordFolder.addUser(user));
     }
 
     @Transactional

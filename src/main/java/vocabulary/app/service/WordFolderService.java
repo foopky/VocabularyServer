@@ -1,5 +1,7 @@
 package vocabulary.app.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import vocabulary.app.entity.Word;
@@ -50,8 +52,8 @@ public class WordFolderService {
     public void addWordToFolder(String language, Long wordId, Long folderId){ getStrategy(language).addWordToFolder(wordId,folderId); }
 
     @Transactional
-    public List<Word> getAllWordsInFolder(Long folderId){
-        return wordInFolderRepository.getAllWordsOnFolder(folderId);
+    public Page<Word> getAllWordsInFolder(Long folderId, Pageable pageable){
+        return wordInFolderRepository.getAllWordsOnFolder(folderId, pageable);
     }
 
     @Transactional
