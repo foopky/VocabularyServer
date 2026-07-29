@@ -16,8 +16,11 @@ jobs:
   build-and-push:
     name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
+    # 잡 출력에 시크릿 값이 섞이면 Actions가 출력을 통째로 버린다
+    # ("Skip output 'x' since it may contain secret"). 그래서 사용자명이 들어간
+    # 전체 이미지 참조는 넘기지 않고, 태그만 넘겨 배포 잡에서 조립한다.
     outputs:
-      image: ${{ steps.meta.outputs.image }}
+      tag: ${{ steps.meta.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,9 +30,10 @@ jobs:
         run: |
           REPO="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}"
           SHA="${GITHUB_SHA::7}"
-          echo "image=${REPO}:${SHA}" >> "$GITHUB_OUTPUT"
+          # tag는 시크릿을 포함하지 않으므로 잡 출력으로 안전하게 넘어간다
+          echo "tag=${SHA}" >> "$GITHUB_OUTPUT"
           echo "tags=${REPO}:${SHA},${REPO}:latest" >> "$GITHUB_OUTPUT"
-          echo "resolved image: ${REPO}:${SHA}"   # 배포 잡에서 빈 값 디버깅용
+          echo "resolved tag: ${SHA}"
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -70,16 +74,21 @@ jobs:
           script: |
             set -eu
 
-            IMAGE="${{ needs.build-and-push.outputs.image }}"
+            # 시크릿은 with/script 치환으로는 정상 전달된다(잡 출력만 걸러짐)
+            TAG="${{ needs.build-and-push.outputs.tag }}"
+            IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${TAG}"
             CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
             APP_PORT="${{ env.APP_PORT }}"
             ENV_FILE="${{ env.ENV_FILE }}"
 
-            # 빈 값이면 "invalid reference format" 대신 원인을 바로 알 수 있게
-            if [ -z "$IMAGE" ]; then
-              echo "::error::image reference is empty - check build-and-push job outputs"
+            # 아래 두 가드는 "invalid reference format" 대신 원인을 바로 알려준다
+            if [ -z "$TAG" ]; then
+              echo "::error::tag is empty - check build-and-push job outputs"
               exit 1
             fi
+            case "$IMAGE" in
+              /*) echo "::error::DOCKERHUB_USERNAME secret is not set"; exit 1 ;;
+            esac
 
             # ec2-user가 docker 그룹에 없으면 sudo로 폴백
             DOCKER="docker"
