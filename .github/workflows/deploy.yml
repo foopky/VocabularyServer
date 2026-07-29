@@ -1,145 +1,58 @@
 name: CI/CD
 
-# main에 push되면 Docker Hub로 빌드/push → EC2에 SSH 접속해서 pull/run
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: japflix-backend           # Docker Hub 리포지토리 이름
-  CONTAINER_NAME: app
-  APP_PORT: 8080
-  ENV_FILE: /home/ec2-user/.env         # 시크릿은 인스턴스의 이 파일에서 주입
+  IMAGE_NAME: japflix-backend
 
 jobs:
   build-and-push:
-    name: Build & Push to Docker Hub
     runs-on: ubuntu-latest
-    # 잡 출력에 시크릿 값이 섞이면 Actions가 출력을 통째로 버린다
-    # ("Skip output 'x' since it may contain secret"). 그래서 사용자명이 들어간
-    # 전체 이미지 참조는 넘기지 않고, 태그만 넘겨 배포 잡에서 조립한다.
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Resolve image tags
-        id: meta
-        run: |
-          REPO="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}"
-          SHA="${GITHUB_SHA::7}"
-          # tag는 시크릿을 포함하지 않으므로 잡 출력으로 안전하게 넘어간다
-          echo "tag=${SHA}" >> "$GITHUB_OUTPUT"
-          echo "tags=${REPO}:${SHA},${REPO}:latest" >> "$GITHUB_OUTPUT"
-          echo "resolved tag: ${SHA}"
+      - id: meta
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Gradle 빌드는 Dockerfile 안에서 수행된다(멀티스테이지).
-      # 의존성 레이어가 캐시되므로 build.gradle이 안 바뀌면 재다운로드하지 않는다.
-      - name: Build and push
-        uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          platforms: linux/amd64        # EC2가 Graviton(arm64)이면 linux/arm64로 변경
-          tags: ${{ steps.meta.outputs.tags }}
+          platforms: linux/amd64
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tag }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy to EC2
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: SSH into EC2 and run container
-        uses: appleboy/ssh-action@v1.2.0
+      - uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_SSH_PORT || 22 }}
-          script_stop: true
-          # envs로 넘기지 않고 Actions가 스크립트 텍스트에 직접 치환한다.
-          # 원격 셸이 sh일 수도 있어 pipefail 대신 POSIX 호환 set -eu만 쓴다.
           script: |
             set -eu
-
-            # 시크릿은 with/script 치환으로는 정상 전달된다(잡 출력만 걸러짐)
-            TAG="${{ needs.build-and-push.outputs.tag }}"
-            IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${TAG}"
-            CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
-            APP_PORT="${{ env.APP_PORT }}"
-            ENV_FILE="${{ env.ENV_FILE }}"
-
-            # 아래 두 가드는 "invalid reference format" 대신 원인을 바로 알려준다
-            if [ -z "$TAG" ]; then
-              echo "::error::tag is empty - check build-and-push job outputs"
-              exit 1
-            fi
-            case "$IMAGE" in
-              /*) echo "::error::DOCKERHUB_USERNAME secret is not set"; exit 1 ;;
-            esac
-
-            # ec2-user가 docker 그룹에 없으면 sudo로 폴백
-            DOCKER="docker"
-            if ! docker info >/dev/null 2>&1; then
-              DOCKER="sudo docker"
-              # 데몬 자체가 안 떠 있으면 userdata와 동일하게 기동
-              if ! $DOCKER info >/dev/null 2>&1; then
-                sudo systemctl enable --now docker
-              fi
-            fi
-
-            # 시크릿은 이미지에 넣지 않고 인스턴스의 .env에서 주입한다
-            if [ ! -f "$ENV_FILE" ]; then
-              echo "::error::env file not found: $ENV_FILE"
-              exit 1
-            fi
-
-            echo ">>> pull $IMAGE"
-            $DOCKER pull "$IMAGE"
-
-            # 8080을 점유한 기존 컨테이너 제거 (없어도 실패하지 않게)
-            echo ">>> stop old container"
-            $DOCKER rm -f "$CONTAINER_NAME" 2>/dev/null || true
-
-            echo ">>> run new container"
-            $DOCKER run -d \
-              --name "$CONTAINER_NAME" \
-              --restart=always \
-              -p "${APP_PORT}:8080" \
-              --env-file "$ENV_FILE" \
-              --log-opt max-size=10m \
-              --log-opt max-file=3 \
+            IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ needs.build-and-push.outputs.tag }}"
+            docker pull "$IMAGE"
+            docker rm -f app 2>/dev/null || true
+            docker run -d --name app --restart=always -p 8080:8080 \
+              --env-file /home/ec2-user/.env \
+              --log-opt max-size=10m --log-opt max-file=3 \
               "$IMAGE"
-
-            # 헬스체크: SecurityConfig에 permitAll로 등록된 경로는 대문자 C의 /healthCheck
-            echo ">>> wait for /healthCheck"
-            for i in $(seq 1 60); do
-              if curl -fsS "http://localhost:${APP_PORT}/healthCheck" >/dev/null 2>&1; then
-                echo "healthy after $((i * 10 - 10))s"
-                # 이전 SHA 태그 이미지 정리 (실행 중인 컨테이너의 이미지는 보호됨)
-                $DOCKER image prune -af >/dev/null 2>&1 || true
-                exit 0
-              fi
-              if [ -z "$($DOCKER ps -q -f "name=^${CONTAINER_NAME}$")" ]; then
-                echo "::error::container exited early"
-                $DOCKER logs --tail 100 "$CONTAINER_NAME" || true
-                exit 1
-              fi
-              sleep 10
-            done
-
-            echo "::error::health check timed out after 600s"
-            $DOCKER logs --tail 100 "$CONTAINER_NAME" || true
-            exit 1
+            docker image prune -af || true
