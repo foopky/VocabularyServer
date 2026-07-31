@@ -3,6 +3,7 @@ package vocabulary.app.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -52,6 +53,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String message = (e.getMessage() != null) ? e.getMessage() : "잘못된 요청입니다.";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(Map.of("error", "BAD_REQUEST", "message", message));
+    }
+
+    // 사용자별 호출 제한 초과. Retry-After로 언제 다시 시도하면 되는지 알려준다.
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<?> handleRateLimit(RateLimitExceededException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()))
+                .body(Map.of("error", "TOO_MANY_REQUESTS", "message", e.getMessage()));
+    }
+
+    // LLM 호출 실패. 500이 아니라 503으로 내려서 "일시적인 장애, 다시 시도해도 된다"를 구분해준다.
+    //
+    // 여기서 200을 내리면 안 된다. 확장은 "뜻이 없음"(200 + meaning:null)과 "서버가 죽음"에
+    // 서로 다르게 반응해야 하는데, 장애를 200으로 위장하면 사용자에게는 "이 단어는 뜻이 없다"로 보인다.
+    @ExceptionHandler(LlmUnavailableException.class)
+    public ResponseEntity<?> handleLlmUnavailable(LlmUnavailableException e) {
+        logger.error("LLM 호출 실패", e);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", "LLM_UNAVAILABLE", "message", "뜻을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요."));
     }
 
     // FK 제약 위반 등. 200으로 위장하지 않고 실패를 그대로 알린다.
