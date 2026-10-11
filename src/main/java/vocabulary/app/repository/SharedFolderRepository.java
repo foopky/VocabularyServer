@@ -1,5 +1,6 @@
 package vocabulary.app.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,13 @@ import vocabulary.app.entity.User;
 import java.util.List;
 
 public interface SharedFolderRepository extends JpaRepository<SharedFolder, SharedFolderId> {
+    // 공유 게시판 목록. 공유 글마다 작성자(User)와 폴더(WordFolder), 폴더 주인(User)을
+    // 따로 조회하던 N+1을 막기 위해 한 번의 JOIN 쿼리로 함께 가져온다.
+    // 응답 JSON 형태는 그대로 유지된다. (프론트 변경 불필요)
+    @Override
+    @EntityGraph(attributePaths = {"user", "wordFolder", "wordFolder.user"})
+    List<SharedFolder> findAll();
+
     List<SharedFolder> findByUser(User user);
 
     // 공유 게시판에 올라온 건수. 0보다 크면 주인이 아니어도 단어를 열람할 수 있다.
